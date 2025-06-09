@@ -1,7 +1,8 @@
 const https = require('https');
-const { parseStringPromise } = require('xml2js');
+const { XMLParser } = require('fast-xml-parser');
 
 let cache = { time: 0, xml: null };
+const parser = new XMLParser({ ignoreAttributes: false });
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -20,30 +21,32 @@ module.exports = async (req, res) => {
         https.get(url, r => {
           let xml = '';
           r.on('data', chunk => xml += chunk);
-          r.on('end', () => parseStringPromise(xml).then(resolve).catch(reject));
+          r.on('end', () => resolve(xml));
         }).on('error', reject);
       });
-      cache.xml = data;
+      const parsed = parser.parse(data);
+      cache.xml = parsed;
       cache.time = Date.now();
     }
 
-    const progs = (cache.xml.tv.programme || []).filter(p => p.$.channel === id)
+    const programmes = cache.xml.tv.programme;
+    const progs = Array.isArray(programmes) ? programmes : [programmes];
+
+    const matches = progs.filter(p => p['@_channel'] === id)
       .map(p => ({
-        title: p.title[0]._ || p.title[0],
-        start: new Date(p.$.start.slice(0,14).replace(/(.{4})(.{2})(.{2})(.{2})(.{2})/, '$1-$2-$3T$4:$5:00')),
-        stop:  new Date(p.$.stop.slice(0,14).replace(/(.{4})(.{2})(.{2})(.{2})(.{2})/, '$1-$2-$3T$4:$5:00'))
+        title: typeof p.title === 'string' ? p.title : (p.title['#text'] || 'Untitled'),
+        start: new Date(p['@_start'].slice(0,14).replace(/(.{4})(.{2})(.{2})(.{2})(.{2})/, '$1-$2-$3T$4:$5:00')),
+        stop:  new Date(p['@_stop'].slice(0,14).replace(/(.{4})(.{2})(.{2})(.{2})(.{2})/, '$1-$2-$3T$4:$5:00'))
       }))
       .filter(p => p.stop > now)
-      .sort((a,b) => a.start - b.start);
-
-    const nowProg = progs[0];
-    const nextProg = progs[1];
+      .sort((a, b) => a.start - b.start);
 
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate');
     res.status(200).json({
-      now: nowProg?.start <= now ? nowProg : null,
-      next: nextProg || null
+      now: matches[0]?.start <= now ? matches[0] : null,
+      next: matches[1] || null
     });
+
   } catch (e) {
     res.status(500).json({ error: 'EPG load failed', details: e.message });
   }
