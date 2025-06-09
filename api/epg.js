@@ -24,13 +24,17 @@ module.exports = async (req, res) => {
           r.on('end', () => resolve(xml));
         }).on('error', reject);
       });
+
       const parsed = parser.parse(data);
+      if (!parsed || !parsed.tv || !parsed.tv.programme) {
+        throw new Error("XML parsed but missing 'tv.programme' node");
+      }
+
       cache.xml = parsed;
       cache.time = Date.now();
     }
 
-    const programmes = cache.xml.tv.programme;
-    const progs = Array.isArray(programmes) ? programmes : [programmes];
+    const progs = Array.isArray(cache.xml.tv.programme) ? cache.xml.tv.programme : [cache.xml.tv.programme];
 
     const matches = progs.filter(p => p['@_channel'] === id)
       .map(p => ({
