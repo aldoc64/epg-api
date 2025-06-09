@@ -1,0 +1,9 @@
+{
+  "name": "epg-api",
+  "version": "1.0.0",
+  "main": "api/epg.js",
+  "type": "commonjs",
+  "dependencies": {
+    "xml2js": "^0.4.23"
+  }
+}
