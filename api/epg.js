@@ -13,7 +13,7 @@ module.exports = async (req, res) => {
   if (!id) return res.status(400).json({ error: 'Missing id' });
 
   const now = new Date();
-  const url = 'https://iptv-org.github.io/epg/guides/en.xml';
+  const url = 'https://raw.githubusercontent.com/aldoc64/en_light/main/en-light.xml';
 
   try {
     if (!cache.xml || Date.now() - cache.time > 5 * 60 * 1000) {
