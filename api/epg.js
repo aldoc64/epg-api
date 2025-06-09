@@ -52,6 +52,9 @@ module.exports = async (req, res) => {
     });
   } catch (e) {
     res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate');
     res.status(500).json({ error: 'EPG load failed', details: e.message });
   }
 };
