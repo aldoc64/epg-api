@@ -1,9 +1,9 @@
-import https from 'https';
-import { parseStringPromise } from 'xml2js';
+const https = require('https');
+const { parseStringPromise } = require('xml2js');
 
 let cache = { time: 0, xml: null };
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -47,4 +47,4 @@ export default async function handler(req, res) {
   } catch (e) {
     res.status(500).json({ error: 'EPG load failed', details: e.message });
   }
-}
+};
